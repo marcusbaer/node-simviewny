@@ -13,7 +13,7 @@ Usage
 
 More is coming soon..
 
-Planned command line parameters
+Command line parameters
 ----------
 
 **port** to use a different port
