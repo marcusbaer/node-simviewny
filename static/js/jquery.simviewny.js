@@ -4,6 +4,7 @@
         'title': null,
         'src': null,
         'full': null,
+        'imagedata': null,
         'info': null,
         'rotation': 0,
         'excludetime': null,
@@ -30,7 +31,6 @@ $(document).ready(function(){
 
     $.get('/service/images', function(imgdata){
         images.reset();
-        imgdata = JSON.parse(imgdata);
         var img_src = '';
         _.each(imgdata, function(img){
             var i = new SImg(img);
@@ -53,17 +53,55 @@ $(document).ready(function(){
             $(this).attr("src", "").hide();
         });
 
-        // test a post request
-        $.ajax({
-            url: '/service/image/thumbs/Raspberry_Pi-595x446.jpg',
-            method: 'POST',
-            data: JSON.stringify(images.get('thumbs/Raspberry_Pi-595x446.jpg')),
-            success: function(imgdata){
-                console.log("image meta data saved for ...");
-                console.log(imgdata);
-            }
-        });
+        saveImage('thumbs/Raspberry_Pi-595x446.jpg');
+
+        deleteImage('thumbs/Raspberry_Pi-595x446.jpg');
 
     });
 
 });
+
+function addImage (id, title, filedata, callback) {
+    images.add(new SImg({
+        'id': id,
+        'title': title || '',
+        'src': null,
+        'full': null,
+        'imagedata': filedata,
+        'info': null,
+        'rotation': 0,
+        'excludetime': null,
+        'shottime': null,
+        'shotplace': null
+    }));
+    saveImage(id, callback);
+}
+
+function saveImage (id, callback) {
+    $.ajax({
+        url: '/service/image/' + id,
+        type: 'POST',
+        data: JSON.stringify(images.get(id)),
+        success: function(imgdata){
+            console.log("image meta data saved for ...");
+            console.log(imgdata);
+            if (callback) {
+                callback(result);
+            }
+        }
+    });
+}
+
+function deleteImage (id, callback) {
+    $.ajax({
+        url: '/service/image/' + id,
+        type: 'DELETE',
+        success: function(result){
+            console.log("deleted");
+            console.log(result);
+            if (callback) {
+                callback(result);
+            }
+        }
+    });
+}

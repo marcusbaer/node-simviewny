@@ -29,6 +29,7 @@ db.on('load', function() {
             'title': 'A Raspberry Pi',
             'src': 'thumbs/Raspberry_Pi-595x446.jpg',
             'full': 'full/Raspberry_Pi-595x446.jpg',
+            'imagedata': null,
             'info': 'Model B',
             'rotation': 0,
             'excludetime': null,
@@ -59,7 +60,12 @@ http.createServer(function (req, res) {
       console.log(req.url + " [" + ext + "]");
   }
 
-  if (isAuthorized() && req.method == 'POST') {
+  if (isAuthorized() && req.method == 'DELETE') {
+      var id = req.url.replace(/\/service\/image\//,'');
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      sendData = {task: 'delete', result: 'ok', id: id};
+      res.end(JSON.stringify(sendData));
+  } else if (isAuthorized() && req.method == 'POST') {
       var body = '';
       req.on('data', function (data) {
           body += data;
@@ -67,19 +73,17 @@ http.createServer(function (req, res) {
       req.on('end', function () {
           req.body = parsePostBody(body);
           // service handling POST
-          res.writeHead(200, {'Content-Type': 'text/plain'});
+          res.writeHead(200, {'Content-Type': 'application/json'});
           var sendData = { error: 'service not found' };
           if (req.url.indexOf('/service')>=0) {
-              if (req.url.indexOf('/service/image/')>=0) {
-                  var id = req.url.replace(/\/service\/image\//,'');
-                  if (id === req.body.id) {
-                      db.set(req.body.id, req.body, function() {
-                          console.log('Image meta data for ' + req.body.id + ' is now saved on disk.')
-                      });
-                      sendData = req.body;
-                  } else {
-                      sendData = { error: 'id not matched'};
-                  }
+              var id = req.url.replace(/\/service\/image\//,'');
+              if (id === req.body.id) {
+                  db.set(req.body.id, req.body, function() {
+                      console.log('Image meta data for ' + req.body.id + ' is now saved on disk.')
+                  });
+                  sendData = req.body;
+              } else {
+                  sendData = { error: 'id not matched'};
               }
           }
           res.end(JSON.stringify(sendData));
@@ -88,7 +92,7 @@ http.createServer(function (req, res) {
       if (req.url.indexOf('/service')>=0) {
           if (isAuthorized()) {
               // service handling GET
-              res.writeHead(200, {'Content-Type': 'text/plain'});
+              res.writeHead(200, {'Content-Type': 'application/json'});
               var sendData = { error: 'service not found' };
               if (req.url === '/service/images') {
                   sendData = images;
@@ -195,6 +199,7 @@ function getSImg (filename) {
         'title': meta.title || null,
         'src': filename,
         'full': meta.full || null,
+        'imagedata': meta.imagedata || null,
         'info': meta.info || null,
         'rotation': meta.rotation || 0,
         'excludetime': meta.excludetime || null,
